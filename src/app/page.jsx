@@ -107,27 +107,53 @@ export default function PopcleanApp() {
 
   const handleSignUp = async (email, password, userData) => {
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: { data: userData }
-    });
-    if (error) {
-      alert(error.message);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: userData }
+      });
+      if (error) {
+        if (error.message.includes('429') || error.status === 429) {
+          alert('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+        } else {
+          alert(error.message);
+        }
+        setLoading(false);
+        return false;
+      }
+      // Se não houver sessão imediata, mostrar mensagem de confirmação
+      if (!data.session) {
+        alert('Conta criada! Verifique seu email para confirmar o cadastro, ou faça login diretamente.');
+        setLoading(false);
+        return true;
+      }
+      return true;
+    } catch (err) {
+      alert('Erro de conexão. Tente novamente em alguns minutos.');
       setLoading(false);
       return false;
     }
-    return true;
   };
 
   const handleSignIn = async (email, password) => {
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      alert('Email ou senha incorretos');
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        if (error.message.includes('429') || error.status === 429) {
+          alert('Muitas tentativas. Aguarde alguns minutos e tente novamente.');
+        } else {
+          alert('Email ou senha incorretos');
+        }
+        setLoading(false);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      alert('Erro de conexão. Tente novamente em alguns minutos.');
       setLoading(false);
       return false;
     }
-    return true;
   };
 
   const handleSignOut = async () => {
